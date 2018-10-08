@@ -1,3 +1,5 @@
+PrintWriter output;
+
 final int FIELD_WIDTH = 1000;
 final int FIELD_HEIGHT = 1000;
 
@@ -15,7 +17,7 @@ final float BOT_HEIGHT = 16 / unit;
 // Bot position and rotation on the field, denoted by the center most point of the bot
 float botXpos = 50;
 float botYpos = 50;
-float botAngle = 0;
+float botAngle = PI / 3;
 
 // The four corners of the bot represented by an angle
 float a1 = atan((BOT_HEIGHT / 2) / (BOT_WIDTH / 2));
@@ -27,29 +29,58 @@ float a4 = 2 * PI - atan((BOT_HEIGHT / 2) / (BOT_WIDTH / 2));
 float botSpeed = 1 / unit;
 float botRotSpeed = PI / 2;
 
-int total_distance = 0;
+float total_distance = 0;
 float total_time = 0;
+
+int count = 0;
 
 void setup() {
   size(1000, 1000);
   background(0);
   stroke(255);
   
-  updateBotPos();
-  for(int i = 0; i < 100; i++) {
-    updateBotPos();
-  }
-  println(percentComplete());
+  
+  // Set up text file for data logging
+  output = createWriter("datalog.txt"); 
+  
   
 }
 
 
 
 void draw() {
+  count++;
+  updateBotPos();
   
-  
-  
+  if(count > 10) {
+    count = 0;
+    
+    float tempperc = percentComplete();
+    // Write to both the console and text file
+    println("Total Time= " + total_time);
+    output.println("Total Time= " + total_time);
+    println("Total Distance= " + total_distance);
+    output.println("Total Distance= " + total_distance);
+    println("Percent Mown= " + tempperc);
+    output.println("Percent Mown= " + tempperc);
+    if(tempperc >= 98) {
+      // Writes the remaining data to the file
+      output.flush(); 
+      // Finishes the file
+      output.close(); 
+      exit();
+    }
+  }
 }
+
+// If a key is pressed, it will save the data and close the simulation
+void keyPressed() {
+  output.flush(); // Writes the remaining data to the file
+  output.close(); // Finishes the file
+  exit(); // Stops the program
+}
+
+
 
 // Calculate new position of bot
 void updateBotPos() {
@@ -58,21 +89,28 @@ void updateBotPos() {
   botXpos += unit * cos(botAngle); 
   botYpos += unit * sin(botAngle); 
   updateOutline();
+  
   // If the bot is outside of field, make a turn to face the feild
-  if((int)(botXpos) < 0 || (int)(botXpos) >= FIELD_WIDTH || (int)(botYpos) < 0 || (int)(botYpos) < FIELD_HEIGHT) {
+  if((int)(botXpos) < 0 || (int)(botXpos) >= FIELD_WIDTH || (int)(botYpos) < 0 || (int)(botYpos) >= FIELD_HEIGHT) {
     updateBotRot();
   }
+  
 }
 
 // Calculate new angle of bot given an angle to increment to
 void updateBotRot() {
-  float goal = random(30,50);
-  while(abs(goal - botAngle) > 0.0001) {
+  
+  float goal = random(50,85);
+  float tempAngle = botAngle;
+  println("new angle: " + goal + botAngle);
+  while(abs((tempAngle + radians(goal)) - botAngle) > 0.1) {
     // Increment by one degree
     botAngle += PI / 180;
     total_time += 1 / 90;
     updateOutline();
   }
+  
+  
 }
 
 // Calculates current outline using position and angle, then adds data to field
@@ -147,7 +185,7 @@ void genLineOutline(float x0, float y0, float x1, float y1) {
 
 
 void updatePoint(int n, int m) {
-  if(!(n < 0) && !(n >= FIELD_WIDTH) && !(m < 0) && !(n >= FIELD_WIDTH)) {
+  if(!(n < 0) && !(n >= FIELD_WIDTH) && !(m < 0) && !(m >= FIELD_WIDTH)) {
     if(field[m][n] != 1) {
       field[m][n] = 1;
     }
