@@ -6,6 +6,8 @@ final int FIELD_HEIGHT = 1000;
 // Test Field in which all movement data will be referenced
 int[][] field = new int[FIELD_HEIGHT][FIELD_WIDTH];
 
+int[][] island_data = new int[FIELD_HEIGHT][FIELD_WIDTH];
+
 // Defines what each unit in the array ammounts to in meters
 float unit = 0.5;
 
@@ -29,6 +31,9 @@ float a4 = 2 * PI - atan((BOT_HEIGHT / 2) / (BOT_WIDTH / 2));
 float botSpeed = 1 / unit;
 float botRotSpeed = PI / 2;
 
+// Maximum possible "collision distance"
+final float MAX_DIST = 1;
+
 float total_distance = 0;
 float total_time = 0;
 
@@ -51,6 +56,10 @@ void setup() {
 void draw() {
   count++;
   updateBotPos();
+  if(checkCollision()) {
+    
+  }
+  
   
   if(count > 10) {
     count = 0;
@@ -80,6 +89,7 @@ void keyPressed() {
   exit(); // Stops the program
 }
 
+// Create Empty island data array
 
 
 // Calculate new position of bot
@@ -90,12 +100,45 @@ void updateBotPos() {
   botYpos += unit * sin(botAngle); 
   updateOutline();
   
+  /*
   // If the bot is outside of field, make a turn to face the feild
   if((int)(botXpos) < 0 || (int)(botXpos) >= FIELD_WIDTH || (int)(botYpos) < 0 || (int)(botYpos) >= FIELD_HEIGHT) {
     updateBotRot();
   }
+  */
   
 }
+
+// Check for collision between bot and borders
+boolean checkCollision() {
+  boolean ret = false;
+  float minDist = 999999999;
+  int tempx = 0;
+  int tempy = 0;
+  float temp = 999999999;
+  for(int i = (int)(botXpos); i < BOT_HEIGHT * sqrt(2) + (int)(botXpos); i++) {
+    for(int j = (int)(botYpos); j < BOT_WIDTH * sqrt(2) + (int)(botYpos); j++) {
+      // Check to make sure point is in bounds, and then check to see if island_data[j][i] is equal to 1
+      if(!(j < 0 || j >= FIELD_WIDTH || i < 0 || i >= FIELD_HEIGHT) && island_data[j][i] == 1) {
+        temp = (int)(sqrt((i - botXpos) * (i - botXpos) + (j - botYpos) * (j - botYpos)));
+        if(temp < minDist) {
+          minDist = temp;
+          tempx = i;
+          tempy = j;
+        }
+      }
+    }
+  }
+  
+  // Check distance for maximum possible "collision distance"
+  if(minDist <= MAX_DIST) {
+    ret = true;
+  }
+  
+  return ret;
+}
+
+
 
 // Calculate new angle of bot given an angle to increment to
 void updateBotRot() {
