@@ -43,12 +43,13 @@ void setup() {
   size(1000, 1000);
   background(0);
   stroke(255);
-  
+  frameRate(300);
   
   // Set up text file for data logging
   output = createWriter("datalog.txt"); 
   
-  
+  // Set up basic island data (TEMPORARY)
+  populateIslandArray();
 }
 
 
@@ -57,7 +58,8 @@ void draw() {
   count++;
   updateBotPos();
   if(checkCollision()) {
-    
+    println("Collision");
+    updateBotRot();
   }
   
   
@@ -90,7 +92,17 @@ void keyPressed() {
 }
 
 // Create Empty island data array
-
+void populateIslandArray() {
+  for(int i = 0; i < island_data.length; i++) {
+    island_data[i][0] = 1;
+    island_data[i][island_data[0].length - 1] = 1;
+  }
+  
+  for(int i = 0; i < island_data[0].length; i++) {
+    island_data[0][i] = 1;
+    island_data[island_data.length - 1][i] = 1;
+  }
+}
 
 // Calculate new position of bot
 void updateBotPos() {
@@ -140,9 +152,34 @@ boolean checkCollision() {
 
 
 
-// Calculate new angle of bot given an angle to increment to
+// Calculate new angle of bot given an angle to increment to while taking into account time to get there
 void updateBotRot() {
+  updateBotPos();
+  updateBotPos();
+  updateBotPos();
+  float tempAngle = botAngle;
+  while(checkCollision()){
+    botAngle -= PI;
+    updateBotPos();
+    updateBotPos();
+    updateBotPos();
+    botAngle += PI;
+    botAngle = tempAngle;
+    float goal = random(60,120);
+    int testDir = (int)(random(0, 2));
+    println("new angle: " + goal + botAngle);
+    if(testDir == 0) {
+      goal *= -1;
+    }
+    shiftBotAngle(goal);
+    updateBotPos();
+    updateBotPos();
+    updateBotPos();
+    println("Turning");
+  }
   
+  // Old Rotation Code
+  /*
   float goal = random(50,85);
   float tempAngle = botAngle;
   println("new angle: " + goal + botAngle);
@@ -152,9 +189,26 @@ void updateBotRot() {
     total_time += 1 / 90;
     updateOutline();
   }
-  
-  
+  */
 }
+
+// Shifts current bot angle to new angle
+void shiftBotAngle(float degree) {
+  float temp = botAngle;
+  int dir = 1;
+  if(degree < 0) {
+    dir = -1;
+  }
+  while(abs((temp + radians(degree)) % (2 * PI) - botAngle % (2 * PI)) > 0.1) {
+    // Increment by one degree
+    botAngle += PI / 180 * dir;
+    total_time += 1 / 90;
+    updateOutline();
+    println(botAngle);
+  }
+}
+
+
 
 // Calculates current outline using position and angle, then adds data to field
 void updateOutline() {
